@@ -1,6 +1,8 @@
 package com.rxliuli.example.wxmpexample.config;
 
+import com.rxliuli.example.wxmpexample.handler.MsgHandler;
 import me.chanjar.weixin.mp.api.WxMpInMemoryConfigStorage;
+import me.chanjar.weixin.mp.api.WxMpMessageRouter;
 import me.chanjar.weixin.mp.api.WxMpService;
 import me.chanjar.weixin.mp.api.impl.WxMpServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,7 +21,12 @@ import javax.annotation.PostConstruct;
 @EnableConfigurationProperties(WxMpPropertiesConfig.class)
 public class WxMpMainConfig {
     private final WxMpPropertiesConfig wxMpPropertiesConfig;
-
+    private final MsgHandler msgHandler;
+    /**
+     * 微信公众号监听管理路由映射表
+     * 其实就是监听用户在公众号的操作罢了, 比如点击了某个菜单, 发送了一些消息
+     */
+    private WxMpMessageRouter wxMpMessageRouter;
     /**
      * 微信公众号的服务对象
      * 用户调用微信的各种 API, 例如获取 access_token
@@ -27,8 +34,9 @@ public class WxMpMainConfig {
     private WxMpService wxMpService;
 
     @Autowired
-    public WxMpMainConfig(WxMpPropertiesConfig wxMpPropertiesConfig) {
+    public WxMpMainConfig(WxMpPropertiesConfig wxMpPropertiesConfig, MsgHandler msgHandler) {
         this.wxMpPropertiesConfig = wxMpPropertiesConfig;
+        this.msgHandler = msgHandler;
     }
 
     /**
@@ -45,10 +53,30 @@ public class WxMpMainConfig {
         //设置策略到服务对象中
         wxMpService = new WxMpServiceImpl();
         wxMpService.setWxMpConfigStorage(storage);
+        //添加路由
+        wxMpMessageRouter = this.newRouter(wxMpService);
+    }
+
+    /**
+     * 根据微信 api 服务对象创建一个微信监听路由
+     *
+     * @param wxMpService 微信 api 服务
+     * @return 微信监听路由对象
+     */
+    private WxMpMessageRouter newRouter(WxMpService wxMpService) {
+        WxMpMessageRouter router = new WxMpMessageRouter(wxMpService);
+        //发送消息(默认)
+        router.rule().async(false).handler(this.msgHandler).end();
+        return router;
     }
 
     @Bean
     public WxMpService wxMpService() {
         return wxMpService;
+    }
+
+    @Bean
+    public WxMpMessageRouter wxMpMessageRouter() {
+        return wxMpMessageRouter;
     }
 }
