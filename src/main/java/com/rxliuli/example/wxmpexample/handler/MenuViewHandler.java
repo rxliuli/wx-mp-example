@@ -17,7 +17,6 @@ import java.util.Map;
 public class MenuViewHandler extends BaseHandler {
     @Override
     public WxMpXmlOutMessage handle(WxMpXmlMessage wxMessage, Map<String, Object> context, WxMpService wxMpService, WxSessionManager sessionManager) {
-        //TODO 这里一直进不来
         return null;
     }
 }
