@@ -1,6 +1,6 @@
 package com.rxliuli.example.wxmpexample.config;
 
-import com.rxliuli.example.wxmpexample.handler.MsgHandler;
+import com.rxliuli.example.wxmpexample.handler.*;
 import me.chanjar.weixin.mp.api.WxMpInMemoryConfigStorage;
 import me.chanjar.weixin.mp.api.WxMpMessageRouter;
 import me.chanjar.weixin.mp.api.WxMpService;
@@ -12,6 +12,8 @@ import org.springframework.context.annotation.Configuration;
 
 import javax.annotation.PostConstruct;
 
+import static me.chanjar.weixin.common.api.WxConsts.*;
+
 /**
  * 微信公众号主要的配置类
  *
@@ -22,6 +24,11 @@ import javax.annotation.PostConstruct;
 public class WxMpMainConfig {
     private final WxMpPropertiesConfig wxMpPropertiesConfig;
     private final MsgHandler msgHandler;
+    private final LogHandler logHandler;
+    private final MenuClickHandler menuClickHandler;
+    private final SubscribeHandler subscribeHandler;
+    private final UnsubscribeHandler unsubscribeHandler;
+    private final MenuViewHandler menuViewHandler;
     /**
      * 微信公众号监听管理路由映射表
      * 其实就是监听用户在公众号的操作罢了, 比如点击了某个菜单, 发送了一些消息
@@ -34,9 +41,14 @@ public class WxMpMainConfig {
     private WxMpService wxMpService;
 
     @Autowired
-    public WxMpMainConfig(WxMpPropertiesConfig wxMpPropertiesConfig, MsgHandler msgHandler) {
+    public WxMpMainConfig(WxMpPropertiesConfig wxMpPropertiesConfig, MsgHandler msgHandler, LogHandler logHandler, MenuClickHandler menuClickHandler, SubscribeHandler subscribeHandler, UnsubscribeHandler unsubscribeHandler, MenuViewHandler menuViewHandler) {
         this.wxMpPropertiesConfig = wxMpPropertiesConfig;
         this.msgHandler = msgHandler;
+        this.logHandler = logHandler;
+        this.menuClickHandler = menuClickHandler;
+        this.subscribeHandler = subscribeHandler;
+        this.unsubscribeHandler = unsubscribeHandler;
+        this.menuViewHandler = menuViewHandler;
     }
 
     /**
@@ -65,6 +77,23 @@ public class WxMpMainConfig {
      */
     private WxMpMessageRouter newRouter(WxMpService wxMpService) {
         WxMpMessageRouter router = new WxMpMessageRouter(wxMpService);
+        //日志记录
+        router.rule().handler(this.logHandler).next();
+        //菜单点击消息
+        router.rule().async(false).msgType(XmlMsgType.EVENT)
+                .event(MenuButtonType.CLICK)
+                .handler(this.menuClickHandler).end();
+        //菜单跳转链接消息
+        router.rule().async(false).msgType(XmlMsgType.EVENT)
+                .event(MenuButtonType.VIEW).handler(this.menuViewHandler).end();
+        //关注
+        router.rule().async(false).msgType(XmlMsgType.EVENT)
+                .event(EventType.SUBSCRIBE)
+                .handler(this.subscribeHandler).end();
+        //取消关注
+        router.rule().async(false).msgType(XmlMsgType.EVENT)
+                .event(EventType.UNSUBSCRIBE)
+                .handler(this.unsubscribeHandler).end();
         //发送消息(默认)
         router.rule().async(false).handler(this.msgHandler).end();
         return router;

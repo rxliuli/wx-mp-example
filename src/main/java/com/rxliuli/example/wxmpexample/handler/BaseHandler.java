@@ -1,5 +1,6 @@
 package com.rxliuli.example.wxmpexample.handler;
 
+import com.rxliuli.example.wxmpexample.builder.MessageBuilder;
 import me.chanjar.weixin.common.session.WxSessionManager;
 import me.chanjar.weixin.mp.api.WxMpMessageHandler;
 import me.chanjar.weixin.mp.api.WxMpService;
@@ -7,6 +8,7 @@ import me.chanjar.weixin.mp.bean.message.WxMpXmlMessage;
 import me.chanjar.weixin.mp.bean.message.WxMpXmlOutMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Map;
 
@@ -17,6 +19,9 @@ import java.util.Map;
  */
 public abstract class BaseHandler implements WxMpMessageHandler {
     final Logger log = LoggerFactory.getLogger(getClass());
+
+    @Autowired
+    protected MessageBuilder builder;
 
     /**
      * 默认空实现
